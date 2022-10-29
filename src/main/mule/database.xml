@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c4357732-21da-4841-8833-3d37d37bb312" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Developer21234" database="sports"/>
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e9d0f096-d2de-4fc7-9b2a-e978ede9c0b2" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<flow name="databaseFlow" doc:id="bbeb9481-7b21-4ea3-86e5-38e21a22d651" >
+		<http:listener doc:name="Listener" doc:id="8682e109-b703-4a08-a24c-cd58273a3125" config-ref="HTTP_Listener_config" path="/select"/>
+		<logger level="INFO" doc:name="Start Logger" doc:id="c5ebda7f-4fca-4095-ad84-91972c9fd016" message='#["Start point"]'/>
+		<db:select doc:id="62d8b196-d708-42f4-9aa0-30c9871fa2bb" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM sports.test]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="database output" doc:id="02b8c1c2-ce2a-4b5b-b0c4-258455ed2e95" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="d7ad1cec-8e48-4c6a-bb27-04d9dc3b7db5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="databaseFlow1" doc:id="a85b1922-435e-463f-a114-d7df49f2c6a2" >
+		<http:listener doc:name="Listener" doc:id="7a59528f-2438-4827-98a1-b4262c468664" config-ref="HTTP_Listener_config" path="/insert"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3be5e758-d9a9-4b7f-ba33-7fe37a8ffa11" message="#[payload]"/>
+		<db:insert doc:name="Insert" doc:id="2d508d54-77bb-4645-a1c6-30e17b68e5ec" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO sports.test (id,name,country)
+VALUES (:id,:name,:country);
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="c04676e7-8566-4e9e-ae64-c09d4afc6605" />
+	</flow>
+</mule>
